@@ -43,46 +43,57 @@
 
             var cache = NCache.Caches["AspNetCache"];
             var ht = cache.GetByTag(new Tag("NC_ASP.net_session_data"));
-            var dctNcache = ht.Cast<DictionaryEntry>().ToDictionary(c => (string)c.Key, c => c.Value);
+            var allSession = new Dictionary<string, Dictionary<string, object>>();
+            var dctNcache = ht.Cast<DictionaryEntry>().ToDictionary(c => (string)c.Key, c => (byte[])c.Value);
 
-            byte[] array = (byte[])dctNcache.First().Value;
-            using (var ms = new MemoryStream(array))
+            foreach (var kvpNcache in dctNcache)
             {
-                var bf = new BinaryFormatter();
-                var obj = bf.Deserialize(ms) as Hashtable;
-                Debug.WriteLine($"{nameof(obj)} is {obj.GetType()}");
+                // Aggiungo la sezione
+                var session = new Dictionary<string, object>();
+                allSession.Add(kvpNcache.Key, session);
 
-                if (obj["SD"] is byte[] sd)
+                byte[] array = kvpNcache.Value;
+                using (var ms = new MemoryStream(array))
                 {
-                    SessionStateItemCollection itemCollection = null;
-                    HttpStaticObjectsCollection staticItemCollection = null;
-                    int timeout = 0;
-                    using (var ms1 = new MemoryStream(sd))
+                    var bf = new BinaryFormatter();
+                    var obj = bf.Deserialize(ms) as Hashtable;
+                    Debug.WriteLine($"{nameof(obj)} is {obj.GetType()}");
+
+                    if (obj["SD"] is byte[] sd)
                     {
-                        BinaryReader reader = new BinaryReader(ms1);
-                        byte sessionFlag = reader.ReadByte();
-                        if ((byte)(sessionFlag & SESSION_ITEMS) == SESSION_ITEMS)
+                        SessionStateItemCollection itemCollection = null;
+                        HttpStaticObjectsCollection staticItemCollection = null;
+                        int timeout = 0;
+                        using (var ms1 = new MemoryStream(sd))
                         {
-                            itemCollection = SessionStateItemCollection.Deserialize(reader);
+                            BinaryReader reader = new BinaryReader(ms1);
+                            byte sessionFlag = reader.ReadByte();
+                            if ((byte)(sessionFlag & SESSION_ITEMS) == SESSION_ITEMS)
+                            {
+                                itemCollection = SessionStateItemCollection.Deserialize(reader);
+                                foreach (string key in itemCollection.Keys)
+                                    session.Add(key, itemCollection[key]);
+                            }
+                            if ((byte)(sessionFlag & SESSION_STATIC_ITEMS) == SESSION_STATIC_ITEMS)
+                            {
+                                staticItemCollection = HttpStaticObjectsCollection.Deserialize(reader);
+                            }
+                            timeout = reader.ReadInt32();
                         }
-                        if ((byte)(sessionFlag & SESSION_STATIC_ITEMS) == SESSION_STATIC_ITEMS)
-                        {
-                            staticItemCollection = HttpStaticObjectsCollection.Deserialize(reader);
-                        }
-                        timeout = reader.ReadInt32();
+                        //var sssd = new SessionStateStoreData(itemCollection, staticItemCollection, timeout);
                     }
-                    var sssd = new SessionStateStoreData(itemCollection, staticItemCollection, timeout);
                 }
             }
 
-            var mcs = Session.Keys.Cast<string>().Where(c => c.StartsWith(csp))
+            var currentSession = Session.Keys.Cast<string>().Where(c => c.StartsWith(csp))
                 .ToDictionary(c => c.Substring(csp.Length), c => $"{Session[c]}");
             var mes = new List<ApplicationEvent>();
+            //TODO: mettere gli application event da un'altra parte (magari sempre in ncache, ma non in session)
             mes.AddRange(Session[nameof(ApplicationEvent)] as List<ApplicationEvent> ?? new List<ApplicationEvent>());
             mes.AddRange(MvcApplication.AppStartEvents);
             mes.AddRange(MvcApplication.AppEndEvents);
 
-            var viewModel = new HomeIndexViewModel { CustomSession = mcs, DctNcache = dctNcache, EventSession = mes };
+            var viewModel = new HomeIndexViewModel { CurrentSession = currentSession, AllSession = allSession, EventSession = mes };
             return View(viewModel);
         }
         [HttpPost]

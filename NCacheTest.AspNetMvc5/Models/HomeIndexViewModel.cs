@@ -4,8 +4,8 @@
 
     public class HomeIndexViewModel
     {
-        public Dictionary<string, string> CustomSession { get; set; }
-        public Dictionary<string, object> DctNcache { get; set; }
+        public Dictionary<string, string> CurrentSession { get; set; }
+        public Dictionary<string, Dictionary<string, object>> AllSession { get; set; }
         public List<ApplicationEvent> EventSession { get; set; }
     }
 }

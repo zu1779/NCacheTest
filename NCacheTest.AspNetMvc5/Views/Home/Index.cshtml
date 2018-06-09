@@ -57,7 +57,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var kvp in Model.CustomSession.OrderBy(c => c.Key))
+        @foreach (var kvp in Model.CurrentSession.OrderBy(c => c.Key))
         {
             <tr>
                 <td>@kvp.Key</td>
@@ -88,12 +88,18 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var kvp in Model.DctNcache)
+        @foreach (var kvpSession in Model.AllSession)
         {
             <tr>
-                <td>@kvp.Key</td>
-                <td>@kvp.Value</td>
+                <td colspan="2">@kvpSession.Key</td>
             </tr>
+            foreach (var kvpVariable in kvpSession.Value)
+            {
+                <tr>
+                    <td>@kvpVariable.Key</td>
+                    <td>@kvpVariable.Value</td>
+                </tr>
+            }
         }
     </tbody>
 </table>
