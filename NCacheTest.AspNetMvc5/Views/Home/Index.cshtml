@@ -1,0 +1,84 @@
+﻿@model (Dictionary<string, string> customSession, List<ApplicationEvent> eventSession)
+
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<hr />
+
+<span>SessionID: @Session.SessionID</span>
+
+<hr />
+
+<form method="post" action="@Url.Action("Restart")" style="display: inline;">
+    <button type="submit" class="btn btn-danger">Restart application</button>
+</form>
+
+<form method="post" action="@Url.Action("EndSession")" style="display: inline;">
+    <button type="submit" class="btn btn-warning">Restart session</button>
+</form>
+
+<hr />
+
+<h1>Test NCache</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label for="key">Key</label>
+        <input autofocus type="text" id="key" name="key" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="value">Value</label>
+        <input type="text" id="value" name="value" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-default">Add Var</button>
+</form>
+
+<hr />
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+            <th><i class="glyphicon glyphicon-remove-circle"></i></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var kvp in Model.customSession.OrderBy(c => c.Key))
+        {
+            <tr>
+                <td>@kvp.Key</td>
+                <td>@kvp.Value</td>
+                <td>
+                    <form method="post" action="@Url.Action("Delete")">
+                        <input type="hidden" name="key" value="@kvp.Key" />
+                        <button><i class="glyphicon glyphicon-remove-circle"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr />
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Event</th>
+            <th>Message</th>
+            <th>TimeStamp</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var applicationEvent in Model.eventSession.OrderByDescending(c => c.TimeStamp))
+        {
+            <tr>
+                <td>@applicationEvent.Name</td>
+                <td>@applicationEvent.Description</td>
+                <td>@applicationEvent.TimeStamp</td>
+            </tr>
+        }
+    </tbody>
+</table>
