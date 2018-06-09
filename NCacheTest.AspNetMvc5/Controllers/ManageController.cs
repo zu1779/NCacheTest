@@ -356,21 +356,13 @@ namespace NCacheTest.AspNetMvc5.Controllers
         private bool HasPassword()
         {
             var user = UserManager.FindById(User.Identity.GetUserId());
-            if (user != null)
-            {
-                return user.PasswordHash != null;
-            }
-            return false;
+            return user != null ? user.PasswordHash != null : false;
         }
 
         private bool HasPhoneNumber()
         {
             var user = UserManager.FindById(User.Identity.GetUserId());
-            if (user != null)
-            {
-                return user.PhoneNumber != null;
-            }
-            return false;
+            return user != null ? user.PhoneNumber != null : false;
         }
 
         public enum ManageMessageId

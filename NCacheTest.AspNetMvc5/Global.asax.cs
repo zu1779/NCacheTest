@@ -15,6 +15,7 @@
     {
         public const string CustomSessionPrefix = "csp-";
         public static readonly ConcurrentBag<ApplicationEvent> AppStartEvents = new ConcurrentBag<ApplicationEvent>();
+        public static readonly ConcurrentBag<ApplicationEvent> AppEndEvents = new ConcurrentBag<ApplicationEvent>();
 
         protected void Application_Start()
         {
@@ -29,10 +30,8 @@
 
         protected void Application_End()
         {
-            string message = $"Ended (SessionId: {Session.SessionID})";
-            var list = Session[nameof(ApplicationEvent)] as List<ApplicationEvent> ?? new List<ApplicationEvent>();
-            list.Add(new ApplicationEvent { Name = nameof(Application_End), Description = message, TimeStamp = DateTime.Now });
-            Session[nameof(ApplicationEvent)] = list;
+            string message = $"Ended";
+            AppEndEvents.Add(new ApplicationEvent { Name = nameof(Application_End), Description = message, TimeStamp = DateTime.Now });
         }
 
         protected void Session_Start(Object sender, EventArgs e)

@@ -1,5 +1,5 @@
 <configuration>
-  <cache-config cache-name="myCache">
+  <!--<cache-config cache-name="myCache">
     <cache-settings inproc="True">
       <logging enable-logs="True" trace-errors="True" trace-debug="False" log-path=""/>
       <performance-counters enable-counters="True" snmp-port="0"/>
@@ -10,5 +10,5 @@
       <cache-topology topology="local-cache"/>
       <client-death-detection enable="False" grace-interval="60sec"/>
     </cache-settings>
-  </cache-config>  
+  </cache-config>-->
 </configuration>

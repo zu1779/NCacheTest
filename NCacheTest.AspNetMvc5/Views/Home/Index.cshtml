@@ -1,4 +1,5 @@
-﻿@model (Dictionary<string, string> customSession, List<ApplicationEvent> eventSession)
+﻿@using NCacheTest.AspNetMvc5.Models
+@model HomeIndexViewModel
 
 @{
     ViewBag.Title = "Home Page";
@@ -6,7 +7,13 @@
 
 <hr />
 
-<span>SessionID: @Session.SessionID</span>
+<ul>
+    <li>SessionID: @Session.SessionID</li>
+    <li>SessionMode: @Session.Mode</li>
+    <li>SessionTimeout: @Session.Timeout</li>
+    <li>SessionCookieMode: @Session.CookieMode</li>
+    <li>IsCookieless: @Session.IsCookieless</li>
+</ul>
 
 <hr />
 
@@ -39,13 +46,18 @@
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
+            <th colspan="3">
+                Personal Session Data
+            </th>
+        </tr>
+        <tr>
             <th>Key</th>
             <th>Value</th>
             <th><i class="glyphicon glyphicon-remove-circle"></i></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var kvp in Model.customSession.OrderBy(c => c.Key))
+        @foreach (var kvp in Model.CustomSession.OrderBy(c => c.Key))
         {
             <tr>
                 <td>@kvp.Key</td>
@@ -66,13 +78,38 @@
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
+            <th colspan="2">
+                NCache Data
+            </th>
+        </tr>
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var kvp in Model.DctNcache)
+        {
+            <tr>
+                <td>@kvp.Key</td>
+                <td>@kvp.Value</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr />
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
             <th>Event</th>
             <th>Message</th>
             <th>TimeStamp</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var applicationEvent in Model.eventSession.OrderByDescending(c => c.TimeStamp))
+        @foreach (var applicationEvent in Model.EventSession.OrderByDescending(c => c.TimeStamp))
         {
             <tr>
                 <td>@applicationEvent.Name</td>
