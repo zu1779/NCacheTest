@@ -19,8 +19,6 @@
 
     public class HomeController : Controller
     {
-        public const string csp = MvcApplication.CustomSessionPrefix;
-
         [HttpPost]
         public ActionResult Restart()
         {
@@ -41,8 +39,9 @@
             const byte SESSION_ITEMS = 1;
             const byte SESSION_STATIC_ITEMS = 2;
 
-            var cache = NCache.Caches["AspNetCache"];
-            var ht = cache.GetByTag(new Tag("NC_ASP.net_session_data"));
+            var sessionCache = NCache.Caches["AspNetSessionCache"];
+            var dataCache = NCache.Caches["AspNetDataCache"];
+            var ht = sessionCache.GetByTag(new Tag("NC_ASP.net_session_data"));
             var allSession = new Dictionary<string, Dictionary<string, object>>();
             var dctNcache = ht.Cast<DictionaryEntry>().ToDictionary(c => (string)c.Key, c => (byte[])c.Value);
 
@@ -85,13 +84,12 @@
                 }
             }
 
-            var currentSession = Session.Keys.Cast<string>().Where(c => c.StartsWith(csp))
-                .ToDictionary(c => c.Substring(csp.Length), c => $"{Session[c]}");
-            var mes = new List<ApplicationEvent>();
+            var currentSession = Session.Keys.Cast<string>().ToDictionary(c => c, c => $"{Session[c]}");
             //TODO: mettere gli application event da un'altra parte (magari sempre in ncache, ma non in session)
-            mes.AddRange(Session[nameof(ApplicationEvent)] as List<ApplicationEvent> ?? new List<ApplicationEvent>());
-            mes.AddRange(MvcApplication.AppStartEvents);
-            mes.AddRange(MvcApplication.AppEndEvents);
+            var mes = dataCache.Get(nameof(ApplicationEvent)) as List<ApplicationEvent> ?? new List<ApplicationEvent>();
+            //mes.AddRange(Session[nameof(ApplicationEvent)] as List<ApplicationEvent> ?? new List<ApplicationEvent>());
+            //mes.AddRange(MvcApplication.AppStartEvents);
+            //mes.AddRange(MvcApplication.AppEndEvents);
 
             var viewModel = new HomeIndexViewModel { CurrentSession = currentSession, AllSession = allSession, EventSession = mes };
             return View(viewModel);
@@ -99,13 +97,13 @@
         [HttpPost]
         public ActionResult Index(string key, string value)
         {
-            Session.Add(MvcApplication.CustomSessionPrefix + key, value);
+            Session.Add(key, value);
             return RedirectToAction(nameof(Index));
         }
         [HttpPost]
         public ActionResult Delete(string key)
         {
-            Session.Remove(MvcApplication.CustomSessionPrefix + key);
+            Session.Remove(key);
             return RedirectToAction(nameof(Index));
         }
 

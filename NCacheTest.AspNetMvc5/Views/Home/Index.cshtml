@@ -1,4 +1,5 @@
-﻿@using NCacheTest.AspNetMvc5.Models
+﻿@using Newtonsoft.Json
+@using NCacheTest.AspNetMvc5.Models
 @model HomeIndexViewModel
 
 @{
@@ -75,34 +76,31 @@
 
 <hr />
 
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th colspan="2">
-                NCache Data
-            </th>
-        </tr>
-        <tr>
-            <th>Key</th>
-            <th>Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var kvpSession in Model.AllSession)
-        {
+@foreach (var kvpSession in Model.AllSession)
+{
+    <table class="table table-bordered table-striped">
+        <thead>
             <tr>
-                <td colspan="2">@kvpSession.Key</td>
+                <th colspan="2">
+                    NCache Data (SessinId: @kvpSession.Key)
+                </th>
             </tr>
-            foreach (var kvpVariable in kvpSession.Value)
+            <tr>
+                <th>Key</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kvpVariable in kvpSession.Value)
             {
-                <tr>
-                    <td>@kvpVariable.Key</td>
-                    <td>@kvpVariable.Value</td>
-                </tr>
+            <tr>
+                <td>@kvpVariable.Key</td>
+                <td>@JsonConvert.SerializeObject(kvpVariable.Value)</td>
+            </tr>
             }
-        }
-    </tbody>
-</table>
+        </tbody>
+    </table>
+}
 
 <hr />
 

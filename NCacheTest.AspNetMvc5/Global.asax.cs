@@ -9,13 +9,25 @@
     using System.Web.Optimization;
     using System.Web.Routing;
 
+    using Alachisoft.NCache.Web.Caching;
     using Newtonsoft.Json;
 
     public class MvcApplication : HttpApplication
     {
-        public const string CustomSessionPrefix = "csp-";
-        public static readonly ConcurrentBag<ApplicationEvent> AppStartEvents = new ConcurrentBag<ApplicationEvent>();
-        public static readonly ConcurrentBag<ApplicationEvent> AppEndEvents = new ConcurrentBag<ApplicationEvent>();
+        public const string AppEventKey = nameof(ApplicationEvent);
+        private static readonly Cache cache;
+
+        static MvcApplication()
+        {
+            cache = NCache.InitializeCache("AspNetDataCache");
+        }
+        
+        private void addAppEvent(ApplicationEvent applicationEvent)
+        {
+            var list = cache.Get(AppEventKey) as List<ApplicationEvent> ?? new List<ApplicationEvent>();
+            list.Add(applicationEvent);
+            cache.Insert(AppEventKey, list);
+        }
 
         protected void Application_Start()
         {
@@ -25,29 +37,43 @@
             BundleConfig.RegisterBundles(BundleTable.Bundles);
 
             string message = $"Started";
-            AppStartEvents.Add(new ApplicationEvent { Name = nameof(Application_Start), Description = message, TimeStamp = DateTime.Now });
+            var applicationEvent = new ApplicationEvent { Name = nameof(Application_Start), Description = message, TimeStamp = DateTime.Now };
+            addAppEvent(applicationEvent);
+        }
+
+        public override void Init()
+        {
+            base.Init();
+
+            AcquireRequestState += MvcApplication_AcquireRequestState;
+        }
+
+        private void MvcApplication_AcquireRequestState(object sender, EventArgs e)
+        {
+            string key = "Last_AcquireRequestState";
+            if (Session[key] == null) Session.Add(key, DateTimeOffset.Now);
+            else Session[key] = DateTimeOffset.Now;
         }
 
         protected void Application_End()
         {
             string message = $"Ended";
-            AppEndEvents.Add(new ApplicationEvent { Name = nameof(Application_End), Description = message, TimeStamp = DateTime.Now });
+            var applicationEvent = new ApplicationEvent { Name = nameof(Application_End), Description = message, TimeStamp = DateTime.Now };
+            addAppEvent(applicationEvent);
         }
 
         protected void Session_Start(Object sender, EventArgs e)
         {
             string message = $"Started (SessionId: {Session.SessionID})";
-            var list = Session[nameof(ApplicationEvent)] as List<ApplicationEvent> ?? new List<ApplicationEvent>();
-            list.Add(new ApplicationEvent { Name = nameof(Session_Start), Description = message, TimeStamp = DateTime.Now });
-            Session[nameof(ApplicationEvent)] = list;
+            var applicationEvent = new ApplicationEvent { Name = nameof(Session_Start), Description = message, TimeStamp = DateTime.Now };
+            addAppEvent(applicationEvent);
         }
 
         protected void Session_End()
         {
             string message = $"Ended (SessionId: {Session.SessionID})";
-            var list = Session[nameof(ApplicationEvent)] as List<ApplicationEvent> ?? new List<ApplicationEvent>();
-            list.Add(new ApplicationEvent { Name = nameof(Session_End), Description = message, TimeStamp = DateTime.Now });
-            Session[nameof(ApplicationEvent)] = list;
+            var applicationEvent = new ApplicationEvent { Name = nameof(Session_End), Description = message, TimeStamp = DateTime.Now };
+            addAppEvent(applicationEvent);
         }
     }
 
